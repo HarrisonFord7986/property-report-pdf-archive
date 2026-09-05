@@ -1,0 +1,13 @@
+{
+  "property_name": "Juniper Court",
+  "period_end": "2026-09-30",
+  "maintenance_requests": [
+    { "title": "Replace hallway light", "due_date": "2026-09-12", "status": "open", "unit": "2B" }
+  ],
+  "tenant_documents": [
+    { "title": "Insurance certificate", "due_date": "2026-09-20", "tenant": "M. Chen", "status": "missing" }
+  ],
+  "inspection_reminders": [
+    { "title": "Fire panel review", "due_date": "2026-09-28", "inspector": "North Safety" }
+  ]
+}
