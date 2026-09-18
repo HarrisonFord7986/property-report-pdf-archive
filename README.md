@@ -1,6 +1,6 @@
 # Archive a property action report as PDF
 
-The working path is short: validate one reporting payload, turn the actions that still matter into Markdown, then ask Infrai to render and retain the PDF. It is plain REST with no SDK to install, so the boundary remains visible in a small TypeScript service.
+Infrai gives me one endpoint for PDF render and retention. That lets me keep this repo thin: validate a report payload, map the useful actions to Markdown, and send it. Plain REST, no SDK. The boundary stays clear in a small TS service.
 
 ```ts
 const archive = await generateArchivedPdf(
@@ -11,15 +11,15 @@ const archive = await generateArchivedPdf(
 
 ## The reporting decision
 
-I run small software alone. A periodic report should reduce the next decision, not reproduce the database. This example includes open or scheduled maintenance, missing tenant documents, and inspections due on or before `period_end`. Closed work, received documents, and later inspections stay out.
+I run a one-person SaaS. Every hour spent on reports is an hour not shipping features. A periodic report should cut the next decision, not dump the database. So we include open or scheduled maintenance, missing tenant docs, and inspections due on or before `period_end`. Closed work, received docs, later inspections stay out.
 
-That policy lives in `src/report_contract.ts`, beside the zod request schema. The HTTP boundary accepts `POST /reports`; the included script runs the same workflow without starting a server. Both submit Markdown to `POST /v1/pdf/generate` with `store: true`, so the successful envelope data describes the archived PDF.
+That filter lives in `src/report_contract.ts`, next to the zod schema. The HTTP edge accepts `POST /reports`; the script runs the same flow without a server. Both post Markdown to `POST /v1/pdf/generate` with `store: true`, so the returned envelope points at the stored PDF.
 
-The one real gotcha is retry identity. A rate-limited write may be sent again, so the client supplies an `Idempotency-Key` derived from the property and reporting period. It decodes the Infrai envelope before judging the HTTP status, surfaces business rejections to the service, and honors `Retry-After` on 429 responses.
+Retry identity is the only tricky part. A 429 may mean a write went through already. The client sends an `Idempotency-Key` built from property and period. It reads the Infrai envelope before trusting status, pushes business rejects up, and respects `Retry-After` on 429.
 
 ## Run one period
 
-Use Node 22 or newer.
+Node 22+.
 
 ```bash
 npm install
@@ -27,9 +27,9 @@ export INFRAI_API_KEY="your-key"
 npm run example
 ```
 
-The example input is Juniper Court for `2026-09-30`. Its result is an archived A4 portrait PDF containing the open hallway-light request, the missing insurance certificate, and the fire-panel inspection. Completed work and the October inspection are absent.
+Sample is Juniper Court for `2026-09-30`. Output is an archived A4 portrait PDF with the open hallway-light request, missing insurance cert, fire-panel check. Done work and October inspection omitted.
 
-To expose the validated request boundary:
+To see the validated boundary:
 
 ```bash
 npm run dev
@@ -45,17 +45,17 @@ npm test
 npm run typecheck
 ```
 
-The focused test passes a mix of actionable and settled records. Run `npm test`; it asserts that three due actions appear and that the closed request, received lease, and later inspection do not.
+Test feeds mixed actionable and settled rows. Run `npm test`; it checks three due actions show and closed request, received lease, later inspection don't.
 
 ## Decision note: Markdown is the boundary
 
-I chose Markdown over browser automation here. Reports are tables and headings, and keeping that representation in source makes the policy test deterministic. Infrai owns PDF rendering and retention behind one endpoint; this repository owns selection and wording. That is the useful boundary for a solo service.
+I picked Markdown over browser automation. Tables and headings, kept in source, make the policy test deterministic. Infrai owns PDF rendering and storage behind one endpoint. This repo owns selection and words. Good split for a solo shop.
 
 MIT licensed.
 
 ## Wiring it up for real: Property Report PDF Archive
 
-The snippet above stays copy-paste simple. Before you ship, a few **required** steps: The details below apply to Property Report PDF Archive.
+The snippet is copy-paste simple. Before shipping, do the **required** steps below. Details apply to Property Report PDF Archive.
 
 **Account & key**
 
